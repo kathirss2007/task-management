@@ -23,7 +23,7 @@ app.get("/", (req, res) => {
 });
 
 // -------------------------
-// MongoDB Connection Check
+// MongoDB URI
 // -------------------------
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -32,15 +32,23 @@ if (!MONGODB_URI) {
   process.exit(1);
 }
 
-// Safe debugging - password will NOT be printed
+// -------------------------
+// Safe MongoDB URI Check
+// Password will NOT be printed
+// -------------------------
 try {
   const uriAfterProtocol = MONGODB_URI.split("://")[1];
+
+  if (!uriAfterProtocol) {
+    throw new Error("Invalid MongoDB URI");
+  }
+
   const mongoUsername = uriAfterProtocol.split(":")[0];
 
   console.log("✅ MongoDB URI found");
   console.log("MongoDB username:", mongoUsername);
 } catch (error) {
-  console.error("❌ Invalid MongoDB URI format");
+  console.error("❌ Invalid MongoDB URI format.");
   process.exit(1);
 }
 
@@ -69,11 +77,13 @@ const taskSchema = new mongoose.Schema(
 const Task = mongoose.model("Task", taskSchema);
 
 // -------------------------
-// GET - Fetch all tasks
+// GET - Fetch All Tasks
 // -------------------------
 app.get("/tasks", async (req, res) => {
   try {
-    const tasks = await Task.find().sort({ createdAt: -1 });
+    const tasks = await Task.find().sort({
+      createdAt: -1,
+    });
 
     res.status(200).json(tasks);
   } catch (err) {
@@ -86,7 +96,7 @@ app.get("/tasks", async (req, res) => {
 });
 
 // -------------------------
-// POST - Create task
+// POST - Create Task
 // -------------------------
 app.post("/tasks", async (req, res) => {
   try {
@@ -116,7 +126,7 @@ app.post("/tasks", async (req, res) => {
 });
 
 // -------------------------
-// PATCH - Update task status
+// PATCH - Update Task Status
 // -------------------------
 app.patch("/tasks/:id", async (req, res) => {
   try {
@@ -136,7 +146,9 @@ app.patch("/tasks/:id", async (req, res) => {
 
     const updatedTask = await Task.findByIdAndUpdate(
       req.params.id,
-      { status },
+      {
+        status,
+      },
       {
         new: true,
         runValidators: true,
@@ -160,7 +172,7 @@ app.patch("/tasks/:id", async (req, res) => {
 });
 
 // -------------------------
-// DELETE - Delete task
+// DELETE - Delete Task
 // -------------------------
 app.delete("/tasks/:id", async (req, res) => {
   try {
@@ -187,7 +199,8 @@ app.delete("/tasks/:id", async (req, res) => {
 });
 
 // -------------------------
-// Connect MongoDB + Start Server
+// MongoDB Connection
+// + Start Server
 // -------------------------
 mongoose
   .connect(MONGODB_URI)
@@ -196,7 +209,10 @@ mongoose
 
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`🌐 Local API: http://localhost:${PORT}`);
+
+      console.log(
+        `🌐 Local API: http://localhost:${PORT}`
+      );
     });
   })
   .catch((err) => {
